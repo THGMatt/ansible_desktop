@@ -30,3 +30,30 @@
     dconf:
       key: "/org/gnome/desktop/background/picture-options"
       value: "'zoom'"
+
+  - name: Copy .bashrc File
+    copy:
+      src: files/bashrc
+      dest: /home/thgmatt/.bashrc
+      owner: thgmatt
+      group: thgmatt
+
+  - name: Add Ansible User
+    user:
+      name: velociraptor
+      system: yes
+
+  - name: Set Up Sudo for Ansible User
+    copy:
+      src: files/sudoer_velociraptor
+      dest: /etc/sudoers.d/velociraptor
+      owner: root
+      group: root
+      mode: 0440
+
+  - name: Add Ansible-Pull Cron Job
+    cron:
+      name: ansible auto-provision
+      user: velociraptor
+      minute: "*/10"
+      job: ansible-pull -o -U https://github.com/THGMatt/ansible_desktop.git
