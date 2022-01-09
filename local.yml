@@ -9,8 +9,9 @@
       name:
         - htop
         - tmux
-        - vim-nox
+        - vim
         - python3-psutil
+        - locate
 
   - name: Copy Wallpaper File
     copy:
