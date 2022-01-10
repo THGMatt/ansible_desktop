@@ -13,6 +13,11 @@
         - python3-psutil
         - locate
 
+  - name: Install Snap Packages
+    snap:
+      name: signal-desktop
+      classic: yes
+
   - name: Copy Wallpaper File
     copy:
       src: files/wallpaper.png
