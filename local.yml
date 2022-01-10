@@ -8,6 +8,7 @@
     package:
       name:
         - htop
+        - snapd
         - tmux
         - vim
         - python3-psutil
