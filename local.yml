@@ -13,10 +13,17 @@
         - vim
         - python3-psutil
         - locate
+        - nextcloud-desktop
+        - steam
 
   - name: Install Snap Packages
     snap:
-      name: signal-desktop
+      name:
+        - signal-desktop
+        - discord
+        - spotify
+        - bitwarden
+        - code
       classic: yes
 
   - name: Copy Wallpaper File
@@ -42,6 +49,13 @@
     copy:
       src: files/bashrc
       dest: /home/thgmatt/.bashrc
+      owner: thgmatt
+      group: thgmatt
+
+  - name: Copy .bash_aliases File
+    copy:
+      src: files/bashaliases
+      dest: /home/thgmatt/.bash_aliases
       owner: thgmatt
       group: thgmatt
 
