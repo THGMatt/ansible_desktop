@@ -1,0 +1,216 @@
+- name: users | thgmatt | create group
+  tags: groups,thgmatt,users
+  group:
+    name: thgmatt
+    state: present
+
+- name: users | thgmatt | create user
+  tags: thgmatt,sudo,users
+  user:
+    name: thgmatt
+    group: thgmatt
+    groups: adm,ansible,{{ sudo_group }}
+    state: present
+    comment: "Matt Herglund"
+    password: "{{ thgmatt_passwd }}"
+    shell: /bin/bash
+
+- name: users | thgmatt | thgmatt | add sudoers file
+  tags: thgmatt,settings,simone,sudo,system,users
+  copy:
+    src: users/sudoers_thgmatt
+    dest: /etc/sudoers.d/thgmatt
+    owner: root
+    group: root
+    mode: 0440
+
+- name: users | thgmatt | create .ssh directory
+  tags: dotfiles,thgmatt,ssh,users
+  file:
+    path: "{{ item.dir }}"
+    state: directory
+    owner: thgmatt
+    group: thgmatt
+    mode: 0700
+  with_items:
+    - { dir: '/home/thgmatt/.ssh' }
+
+- name: users | thgmatt | add public key
+  tags: dotfiles,thgmatt,ssh,ssh-keys,users
+  authorized_key:
+    user: thgmatt
+    key: "{{ item }}"
+  with_file:
+    - users/thgmatt/ssh/thgmatt_id_ed25519.pub
+
+- name: users | thgmatt | create config directories
+  tags: dotfiles,thgmatt,tmux,users,vim,zsh
+  file:
+    path: /home/thgmatt/{{ item.dir }}
+    state: directory
+    owner: thgmatt
+    group: thgmatt
+    mode: 0700
+  with_items:
+    - { dir: '.bash' }
+    - { dir: '.config' }
+    - { dir: '.config/htop' }
+    - { dir: '.config/mc' }
+    - { dir: '.tmux' }
+    - { dir: '.tmux/config' }
+    - { dir: '.tmux/plugins' }
+    - { dir: '.vim' }
+    - { dir: '.vim/autoload' }
+    - { dir: '.vim/bundle' }
+    - { dir: '.vim/colors' }
+    - { dir: '.vim/ftplugin' }
+    - { dir: '.zsh' }
+
+- name: users | thgmatt | copy tmux config (server version)
+  tags: dotfiles,users,thgmatt,tmux,users,vim,zsh
+  copy:
+    src: users/thgmatt/tmux/tmux.conf.server
+    dest: /home/thgmatt/.tmux.conf
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  when: "'server' not in group_names"
+
+- name: users | thgmatt | copy tmux config (workstation version)
+  tags: dotfiles,users,thgmatt,tmux,users,vim,zsh
+  copy:
+    src: users/thgmatt/tmux/tmux.conf.workstation
+    dest: /home/thgmatt/.tmux.conf
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  when: "'server' in group_names"
+
+- name: users | thgmatt | copy dotfiles
+  tags: dotfiles,users,thgmatt,tmux,users,vim,zsh
+  copy:
+    src: users/thgmatt/{{ item.src }}
+    dest: /home/thgmatt/{{ item.dest }}
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  with_items:
+    - { src: 'bash/bash_aliases', dest: '.bash/bash_aliases' }
+    - { src: 'bash/bash_profile', dest: '.bash_profile' }
+    - { src: 'bash/bash_prompt', dest: '.bash/bash_prompt' }
+    - { src: 'bash/bash_functions', dest: '.bash/bash_functions' }
+    - { src: 'bash/bashrc', dest: '.bashrc' }
+    - { src: 'bash/profile', dest: '.profile' }
+    - { src: 'git/gitconfig', dest: '.gitconfig' }
+    - { src: 'htop/htoprc', dest: '.config/htop/htoprc' }
+    - { src: 'inputrc', dest: '.inputrc' }
+    - { src: 'mc/mc.ini', dest: '.config/mc/ini' }
+    - { src: 'vim/vimrc', dest: '.vimrc' }
+    - { src: 'zsh/zshrc', dest: '.zshrc' }
+
+- name: users | thgmatt | clone tmux-completion plugin repository
+  tags: dotfiles,thgmatt,users,tmux
+  git:
+    repo: https://github.com/srsudar/tmux-completion.git
+    dest: /home/thgmatt/.tmux/plugins/completion
+    force: yes
+  notify: update_tmux_plugin_perms
+
+- name: users | thgmatt | clone tmux-continuum plugin repository
+  tags: dotfiles,thgmatt,users,tmux
+  git:
+    repo: https://github.com/tmux-plugins/tmux-continuum
+    dest: /home/thgmatt/.tmux/plugins/continuum
+    force: yes
+  notify: update_tmux_plugin_perms
+
+- name: users | thgmatt | clone tmux-resurrect plugin repository
+  tags: dotfiles,thgmatt,users,tmux
+  git:
+    repo: https://github.com/tmux-plugins/tmux-resurrect
+    dest: /home/thgmatt/.tmux/plugins/resurrect
+    force: yes
+  notify: update_tmux_plugin_perms
+
+- name: users | thgmatt | copy individual zsh config files
+  tags: dotfiles,thgmatt,users,zsh
+  copy:
+    src: users/thgmatt/zsh/{{ item.src }}
+    dest: /home/thgmatt/.zsh/{{ item.src }}
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  with_items:
+    - { src: 'aliases.zsh' }
+    - { src: 'bindkey.zsh' }
+    - { src: 'completion.zsh' }
+    - { src: 'exports.zsh' }
+    - { src: 'functions.zsh' }
+    - { src: 'history.zsh' }
+    - { src: 'path.zsh' }
+    - { src: 'plugins.zsh' }
+    - { src: 'prompt.zsh' }
+    - { src: 'setopt.zsh' }
+    - { src: 'theming.zsh' }
+
+- name: users | thgmatt | copy vim ftype files
+  tags: dotfiles,thgmatt,users,vim
+  copy:
+    src: users/thgmatt/vim/{{ item.src }}
+    dest: /home/thgmatt/.vim/ftplugin/{{ item.src }}
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  with_items:
+    - { src: 'cmake.vim' }
+    - { src: 'cpp.vim' }
+    - { src: 'html.vim' }
+    - { src: 'perl.vim' }
+    - { src: 'python.vim' }
+    - { src: 'ruby.vim' }
+    - { src: 'sql.vim' }
+    - { src: 'xml.vim' }
+
+- name: users | thgmatt | copy vim color files
+  tags: dotfiles,thgmatt,users,vim
+  copy:
+    src: users/thgmatt/vim/{{ item.src }}
+    dest: /home/thgmatt/.vim/colors/{{ item.src }}
+    owner: thgmatt
+    group: thgmatt
+    mode: 0600
+  with_items:
+    - { src: 'bubblegum-256-dark.vim' }
+    - { src: 'darktango.vim' }
+    - { src: 'jellybeans.vim' }
+    - { src: 'xoria256.vim' }
+    - { src: 'zenburn.vim' }
+
+- name: users | thgmatt | install pathogen
+  tags: dotfiles,thgmatt,users,vim
+  copy:
+    src: users/thgmatt/vim/{{ item.src }}
+    dest: "{{ item.dest }}"
+    owner: thgmatt
+    group: thgmatt
+    mode: 0700
+  with_items:
+    - { src: 'pathogen.vim', dest: '/home/thgmatt/.vim/autoload/pathogen.vim' }
+
+- name: users | thgmatt | checkout git repositories
+  tags: git,users,thgmatt
+  become: yes
+  git:
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+    force: yes
+  with_items:
+    - { repo: 'https://github.com/ctrlpvim/ctrlp.vim.git', dest: '/home/thgmatt/.vim/bundle/ctrlp.vim' }
+    - { repo: 'https://github.com/davidhalter/jedi-vim.git', dest: '/home/thgmatt/.vim/bundle/jedi-vim' }
+    - { repo: 'https://github.com/pearofducks/ansible-vim', dest: '/home/thgmatt/.vim/bundle/ansible-vim' }
+    - { repo: 'https://github.com/rhysd/vim-grammarous.git', dest: '/home/thgmatt/.vim/bundle/vim-grammarous' }
+    - { repo: 'https://github.com/ron89/thesaurus_query.vim', dest: '/home/thgmatt/.vim/bundle/thesaurus_query' }
+    - { repo: 'https://github.com/scrooloose/nerdtree.git', dest: '/home/thgmatt/.vim/bundle/nerdtree' }
+    - { repo: 'https://github.com/tpope/vim-obsession.git', dest: '/home/thgmatt/.vim/bundle/vim-obsession' }
+    - { repo: 'https://github.com/vim-syntastic/syntastic.git', dest: '/home/thgmatt/.vim/bundle/syntastic' }
+  notify: update_vim_bundle_perms
